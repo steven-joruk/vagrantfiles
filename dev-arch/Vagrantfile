@@ -1,20 +1,36 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
-
 Vagrant.configure("2") do |config|
+
   config.vm.box = "archlinux/archlinux"
 
-  config.vm.provision "file", source: "~/.ssh/id_rsa", destination: "~/.ssh/id_rsa"
-  config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/id_rsa.pub"
-
   config.vm.provider "virtualbox" do |vb|
-    vb.memory = "1024"
+    vb.gui = true
+    vb.memory = 2048
+    vb.cpus = 2
+    vb.customize ["modifyvm", :id, "--vram", "128"]
   end
 
   config.vm.provision "shell", :privileged => false, inline: <<-SHELL
-    sudo pacman -Sy --noconfirm git
+
+    pacman -S --noconfirm \
+      virtualbox-guest-utils \
+      gdm \
+      git \
+      gnome
+
+    echo "Server = http://mirror.bytemark.co.uk/archlinux/$repo/os/$arch" > /etc/pacman.conf
+
+    rustup default stable
+
+    rustup component add \
+      clippy \
+      rustfmt
+
+    systemctl enable gdm
+    systemctl start gdm
+
     clone git@github.com:steven-joruk/dotfiles.git .dotfiles
     cd .dotfiles
     ./install.sh
+
   SHELL
 end
